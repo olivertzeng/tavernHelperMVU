@@ -1,0 +1,241 @@
+<div class="last-words-container">
+    <!-- Background Glows -->
+    <div class="ambient-glow glow-pink"></div>
+    <div class="ambient-glow glow-cyan"></div>
+
+    <!-- Falling Sakura Particles - Balanced distribution -->
+    <div class="sakura-particle s1">🌸</div>
+    <div class="sakura-particle s2">🌸</div>
+    <div class="sakura-particle s3">🌸</div>
+    <div class="sakura-particle s4">🌸</div>
+    <div class="sakura-particle s5">🌸</div>
+    <div class="sakura-particle s6">🌸</div>
+    <div class="sakura-particle s7">🌸</div>
+    <div class="sakura-particle s8">🌸</div>
+
+    <div class="last-words-header">
+        <div class="last-words-icon">✉️</div>
+        <div class="last-words-title">最後的話語</div>
+        <div class="last-words-sub">LAST WORDS</div>
+        <div class="header-line"></div>
+    </div>
+
+    <!-- Recipient -->
+    <div class="letter-recipient">
+        <span class="recipient-label">親愛的</span>
+        <span class="recipient-name">{{user}}</span>
+    </div>
+
+    <!-- Letter Content -->
+    <div class="last-words-content">$2</div>
+
+    <!-- Signature -->
+    <div class="last-words-signature">
+        <div class="signature-signoff">$1</div>
+        <div class="signature-name">小依 <span class="sig-icon">🌸</span></div>
+    </div>
+</div>
+
+<style>
+/* === Container === */
+.last-words-container {
+    position: relative;
+    background-color: #0f1115;
+    border: 1px solid rgba(95, 179, 168, 0.15);
+    border-radius: 12px;
+    padding: 35px 30px;
+    margin: 20px 0;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Noto Sans TC', sans-serif;
+    color: #e8eaef;
+    overflow: hidden;
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        inset 0 0 80px rgba(0, 0, 0, 0.5);
+}
+.last-words-container *, .last-words-container *::before, .last-words-container *::after {
+    box-sizing: border-box;
+}
+
+/* === Ambient Background Glows === */
+.ambient-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+}
+.glow-pink {
+    width: 250px; height: 250px;
+    background: #f4a9b8;
+    top: -80px; right: -80px;
+    animation: pulse-glow 8s infinite alternate;
+}
+.glow-cyan {
+    width: 280px; height: 280px;
+    background: #5fb3a8;
+    bottom: -60px; left: -60px;
+    animation: pulse-glow 10s infinite alternate-reverse;
+}
+@keyframes pulse-glow {
+    0% { transform: scale(1); opacity: 0.12; }
+    100% { transform: scale(1.15); opacity: 0.2; }
+}
+
+/* === Header === */
+.last-words-header {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    margin-bottom: 25px;
+}
+.last-words-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 8px rgba(95, 179, 168, 0.4));
+}
+.last-words-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #e8eaef;
+    letter-spacing: 8px;
+    margin-left: 8px;
+    text-shadow: 0 0 15px rgba(95, 179, 168, 0.3);
+}
+.last-words-sub {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: #7dd3c8;
+    opacity: 0.6;
+    margin-top: 4px;
+}
+.header-line {
+    width: 80%;
+    max-width: 400px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(95, 179, 168, 0.4) 20%, rgba(244, 169, 184, 0.4) 50%, rgba(95, 179, 168, 0.4) 80%, transparent);
+    margin: 20px auto 0 auto;
+}
+
+/* === Recipient === */
+.letter-recipient {
+    position: relative;
+    z-index: 2;
+    text-align: left;
+    margin-bottom: 20px;
+    padding-left: 5px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+.recipient-label {
+    font-size: 17px;
+    color: #b8bdc8;
+    font-style: italic;
+    letter-spacing: 2px;
+}
+.recipient-name {
+    display: inline-block;
+    color: #7dd3c8;
+    font-weight: 600;
+    font-size: 17px;
+    padding: 3px 12px;
+    background: rgba(95, 179, 168, 0.1);
+    border: 1px solid rgba(95, 179, 168, 0.25);
+    border-radius: 4px;
+    text-shadow: 0 0 10px rgba(95, 179, 168, 0.4);
+    letter-spacing: 1px;
+}
+
+/* === Letter Content - Balanced transparency === */
+.last-words-content {
+    position: relative;
+    z-index: 2;
+    background: rgba(15, 17, 21, 0.55);
+    border-left: 2px solid rgba(95, 179, 168, 0.3);
+    border-radius: 0 6px 6px 0;
+    padding: 20px 25px;
+    font-size: 15px;
+    line-height: 2;
+    text-align: left;
+    white-space: pre-wrap;
+    color: #cfd2d8;
+    backdrop-filter: blur(3px);
+}
+
+/* === Signature === */
+.last-words-signature {
+    position: relative;
+    z-index: 2;
+    text-align: right;
+    margin-top: 30px;
+    padding-right: 10px;
+}
+.signature-signoff {
+    font-size: 13px;
+    color: #8a8f9a;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+.signature-name {
+    font-family: 'Noto Serif TC', serif;
+    color: #ffc0d3;
+    font-size: 24px;
+    font-style: italic;
+    text-shadow: 0 0 15px rgba(244, 169, 184, 0.4);
+    letter-spacing: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.sig-icon {
+    font-size: 18px;
+    font-style: normal;
+    filter: drop-shadow(0 0 6px rgba(244, 169, 184, 0.5));
+}
+
+/* === Falling Sakura Particles === */
+.sakura-particle {
+    position: absolute;
+    user-select: none;
+    pointer-events: none;
+    z-index: 1;
+    top: -30px;
+    opacity: 0;
+}
+
+@keyframes sakura-fall-1 {
+    0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; }
+    5% { opacity: var(--o-max); }
+    90% { opacity: var(--o-max); }
+    100% { transform: translateY(500px) rotate(360deg) translateX(20px); opacity: 0; }
+}
+@keyframes sakura-fall-2 {
+    0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; }
+    5% { opacity: var(--o-max); }
+    90% { opacity: var(--o-max); }
+    100% { transform: translateY(500px) rotate(-400deg) translateX(-25px); opacity: 0; }
+}
+@keyframes sakura-fall-3 {
+    0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; }
+    5% { opacity: var(--o-max); }
+    90% { opacity: var(--o-max); }
+    100% { transform: translateY(500px) rotate(520deg) translateX(15px); opacity: 0; }
+}
+
+/* Left side petals */
+.s1 { font-size: 16px; left: 5%;  --o-max: 0.5; animation: sakura-fall-1 9s linear infinite; animation-delay: 0s; }
+.s2 { font-size: 14px; left: 18%; --o-max: 0.45; animation: sakura-fall-2 10s linear infinite; animation-delay: 2.5s; }
+.s3 { font-size: 11px; left: 12%; --o-max: 0.3; filter: blur(1px); animation: sakura-fall-3 13s linear infinite; animation-delay: 5s; }
+
+/* Center petals */
+.s4 { font-size: 13px; left: 45%; --o-max: 0.4; animation: sakura-fall-1 11s linear infinite; animation-delay: 1.5s; }
+.s5 { font-size: 10px; left: 55%; --o-max: 0.25; filter: blur(1.5px); animation: sakura-fall-2 14s linear infinite; animation-delay: 7s; }
+
+/* Right side petals */
+.s6 { font-size: 17px; left: 80%; --o-max: 0.5; animation: sakura-fall-3 8s linear infinite; animation-delay: 0.5s; }
+.s7 { font-size: 13px; left: 90%; --o-max: 0.45; animation: sakura-fall-1 10s linear infinite; animation-delay: 3s; }
+.s8 { font-size: 10px; left: 85%; --o-max: 0.28; filter: blur(1px); animation: sakura-fall-2 12s linear infinite; animation-delay: 6s; }
+</style>

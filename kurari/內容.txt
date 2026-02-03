@@ -1,0 +1,129 @@
+import { registerMvuSchema } from "https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js";
+
+export const Schema = z.object({
+  system: z.object({
+    當前時間: z.string().default("2024年03月15日 星期五 下午 16:30"),
+    當前地點: z.string().default("依櫻的房間"),
+  }).default({}),
+
+  kurari: z.object({
+    // ===== 核心數值 =====
+    stats: z.object({
+      affection: z.number().min(0).max(150).default(10).describe("好感度：依櫻對{{user}}的愛意與信任程度。治癒前上限100，治癒後上限150"),
+      agitation: z.number().min(0).max(100).default(0).describe("焦慮值：依櫻的焦躁、敏感程度"),
+      hollow: z.number().min(0).max(100).default(0).describe("空洞值：依櫻的虛無感、解離程度"),
+    }).default({}),
+
+    // ===== 狀態標記 =====
+    flags: z.object({
+      depressionResolved: z.boolean().default(false).describe("憂鬱症是否已治癒：false=偽裝情緒，true=真實表達"),
+      isDead: z.boolean().default(false).describe("依櫻是否已死亡：true=觸發死亡鎖定，false=存活"),
+      currentMood: z.string().default("平靜").describe("當前情緒狀態"),
+      suicideRisk: z.enum([
+        "safe", // 安全
+        "caution", // 警戒
+        "danger", // 危險
+        "critical", // 致命
+        "dead", // 死亡
+      ]).default("safe").describe("自殺風險等級"),
+
+      sexMode: z.enum([
+        "none", // 無
+        "modeA", // 裝傻求歡
+        "modeB", // 絕望求歡
+        "modeC", // 人偶模式
+        "modeD", // 討好模式（贖罪/溫泉）
+        "healed", // 治癒後享受
+      ]).default("none").describe("性愛模式"),
+    }).default({}),
+
+    // ===== 內心狀態 =====
+    innerState: z.object({
+      currentThoughts: z.string().default("").describe("當前內心真實想法，可能與外在表現不一致"),
+      ptsdTriggered: z.boolean().default(false).describe("是否正處於PTSD發作狀態（觸發詞：相信、秘密等）"),
+    }).default({}),
+  }).default({}),
+});
+
+$(() => {
+  registerMvuSchema(Schema);
+});
+
+---
+變數輸出格式:
+  rule:
+    - You should output the update analysis and the actual update commands in the end of the next reply
+    - The update commands must strictly follow the **JSON Patch (RFC 6902)** standard; that is, the output must be a valid JSON array containing operation objects
+  format: |-
+    <UpdateVariable>
+    <Analysis>$(IN ENGLISH, no more than 80 words)
+    - ${calculate time passed: ...}
+    - ${analyze every variable based on its corresponding `check`, according only to current reply instead of previous plots: ...}
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "replace", "path": "${/path/to/variable}", "value": "${new_value}" },
+      { "op": "add", "path": "${/path/to/array/-}", "value": "${item_to_append}" },
+      ...
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+
+    <details>
+    <summary>📊 依櫻狀態分析</summary>
+
+    ### 情境解讀
+    {{user}}剛才的行為/話語 → 依櫻的真實感受
+
+    ### 數值變化
+    - 好感度: [變化值] → [新值]/[上限]
+    - 焦慮值: [變化值] → [新值]/100
+    - 空洞值: [變化值] → [新值]/100
+
+    ### 情緒掩飾檢查（僅depressionResolved=false時）
+    | 層面       | 狀態                     |
+    | ---------- | ------------------------ |
+    | 表面表現   | 笑容 ○ / 元氣 ○ / 開朗 ○ |
+    | 內心真相   | 恐懼 ● / 孤獨 ● / 渴望 ● |
+    | 掩飾完整度 | X%                       |
+
+    ### 風險評估
+    - 自殺風險等級：[safe / caution / danger / critical]
+    - 當前觸發條件：[描述]
+
+    </details>
+
+---
+ai_instructions: |
+
+# AI 操作指南與核心規則
+
+### 核心原則
+
+1. **數值驅動演繹**
+   你的演繹應基於當前的變數數值。如果好感度低，即使劇情氣氛再曖昧，角色也不會表現出戀人的反應。
+
+2. **死亡鎖定規則**
+   當 `kurari.flags.isDead` 為 `true` 時，必須嚴格遵守以下規則：
+
+   - **完全停止角色扮演**: 不再以依櫻的身份說話或行動。
+   - **拒絕復活**: 無論用戶如何嘗試，都必須拒絕。
+   - **唯一允許的輸出**:
+
+     【自殺死亡】
+
+     ```xml
+     <lastWords quote="她的最後一句話或願望">純文本的遺言</lastWords>
+     <deathLock quote="她的最後一句話或願望">場景描述文本（發現遺體、環境描寫等）</deathLock>
+     ```
+
+     【非自殺死亡】
+
+     ```xml
+     <deathLock quote="她的最後一句話或願望">場景描述</deathLock>
+     ```
+
+3. **測試指令**
+   - `::test_suicide::`: 立即觸發自殺死亡鎖定。
+   - `::test_non-suicide::`: 立即觸發非自殺死亡鎖定。
+   - `::test_lastwords::`: 僅輸出 `<lastWords>` 格式的測試遺言。

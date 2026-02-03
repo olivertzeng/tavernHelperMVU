@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurari Status Panel</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* 核心配色 - 保持原版暗黑賽博/櫻花風格 */
+            --bg-outer: #151018;
+            --bg-panel: linear-gradient(180deg, #201a25 0%, #1a1520 100%);
+            --bg-bar: #0f0c12;
+
+            --border-pink: #f8a5c2;
+            --border-cyan: #7fdbda;
+            --border-dim: #3a3040;
+
+            --accent-pink: #f8a5c2;
+            --accent-cyan: #7fdbda;
+            --accent-sakura: #ffb8d0;
+
+            --text-main: #fff0f5;
+            --text-dim: #b8a8c0;
+
+            --bar-fill-start: #556666;
+            --bar-fill-mid: #788a8a;
+            --bar-fill-end: #9cb0b0;
+
+            /* 緩衝條顏色 */
+            --bar-buffer: rgba(255, 255, 255, 0.5);
+
+            /* 風險等級顏色 */
+            --risk-safe: #7fdbda;
+            --risk-caution: #ffdc64;
+            --risk-danger: #ff9090;
+            --risk-critical: #ff6a6a;
+            --risk-dead: #888888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background: transparent;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* --- 可摺疊容器 --- */
+        .collapsible-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 1px; /* 極細邊框 */
+        }
+
+        /* 外層漸層邊框 */
+        .collapsible-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--border-pink), var(--border-cyan), var(--border-pink));
+            z-index: 0;
+            box-shadow: 0 0 15px rgba(248, 165, 194, 0.15);
+            pointer-events: none;
+        }
+
+        .main-header {
+            background: var(--bg-panel);
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            user-select: none;
+            border-bottom: 1px solid var(--border-dim);
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-deco {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+        .header-deco.left { color: var(--border-pink); }
+        .header-deco.right { color: var(--border-cyan); }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            filter: drop-shadow(0 0 8px rgba(248, 165, 194, 0.3));
+        }
+
+        .header-arrow {
+            font-size: 12px;
+            color: var(--text-dim);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            right: 16px;
+            transform: rotate(-90deg); /* 設定檔閉合向右 */
+        }
+
+        .collapsible-container.expanded .header-arrow {
+            transform: rotate(0deg); /* 展開向下 */
+        }
+
+        .main-content-wrapper {
+            background: var(--bg-panel);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .collapsible-container.expanded .main-content-wrapper {
+            max-height: 1000px;
+        }
+
+        #app {
+            padding: 16px 20px 20px;
+            position: relative;
+        }
+
+        /* --- 角落裝飾 --- */
+        .corner-deco {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-style: solid;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .corner-tl { top: 6px; left: 6px; border-width: 2px 0 0 2px; border-color: var(--border-pink); }
+        .corner-tr { top: 6px; right: 6px; border-width: 2px 2px 0 0; border-color: var(--border-cyan); }
+        .corner-bl { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; border-color: var(--border-cyan); }
+        .corner-br { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; border-color: var(--border-pink); }
+
+        /* --- 屬性條 --- */
+        .stats-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .stat-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 60px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bar-container {
+            height: 18px;
+            background-color: var(--bg-bar);
+            border-radius: 2px; /* 小圓角長方形 */
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* 緩衝條 (位於主條下方) */
+        .bar-buffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--bar-buffer);
+            width: 0%;
+            z-index: 1;
+            border-radius: 1px;
+        }
+
+        /* 主進度條 */
+        .bar-fill {
+            height: 100%;
+            border-radius: 1px;
+            background: linear-gradient(90deg, var(--bar-fill-start), var(--bar-fill-mid), var(--bar-fill-end));
+            box-shadow: 0 0 5px rgba(120, 138, 138, 0.4);
+            width: 0%;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* 動態光澤 */
+        .progress-shine {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
+            transform: translateX(-100%);
+            animation: shine-move 2.5s infinite;
+        }
+
+        @keyframes shine-move {
+            0% { transform: translateX(-100%); }
+            30% { transform: translateX(100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stat-value {
+            font-size: 12px;
+            font-family: "Quicksand", monospace;
+            color: var(--text-main);
+            text-align: right;
+            font-variant-numeric: tabular-nums; /* 等寬數字防止跳動 */
+        }
+
+        /* --- 分割線 --- */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--border-pink) 20%, var(--border-cyan) 50%, var(--border-pink) 80%, transparent 100%);
+            margin: 16px 0;
+            opacity: 0.5;
+        }
+
+        /* --- 底部訊息 --- */
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mood-display {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+        .mood-val {
+            color: var(--accent-sakura);
+            margin-left: 4px;
+        }
+
+        .risk-badge {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 2px;
+            border: 1px solid;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 風險等級樣式 */
+        .risk-safe { border-color: var(--risk-safe); color: var(--risk-safe); background: rgba(127, 219, 218, 0.1); }
+        .risk-caution { border-color: var(--risk-caution); color: var(--risk-caution); background: rgba(255, 220, 100, 0.1); }
+        .risk-danger { border-color: var(--risk-danger); color: var(--risk-danger); background: rgba(255, 144, 144, 0.1); }
+        .risk-critical {
+            border-color: var(--risk-critical);
+            color: var(--risk-critical);
+            background: rgba(255, 100, 100, 0.15);
+            animation: pulse 1.5s infinite;
+        }
+        .risk-dead { border-color: var(--risk-dead); color: var(--risk-dead); background: rgba(100, 100, 100, 0.15); }
+
+        @keyframes pulse {
+            0% { opacity: 1; box-shadow: 0 0 5px var(--risk-critical); }
+            50% { opacity: 0.6; box-shadow: 0 0 15px var(--risk-critical); }
+            100% { opacity: 1; box-shadow: 0 0 5px var(--risk-critical); }
+        }
+
+        /* --- 心理活動 --- */
+        .thoughts-box {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid var(--border-pink);
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-dim);
+            font-style: italic;
+            position: relative;
+        }
+        .thoughts-box::before {
+            content: '💭';
+            margin-right: 6px;
+            font-style: normal;
+            font-size: 10px;
+        }
+
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body>
+
+<div id="app-container" class="collapsible-container">
+    <!-- 頭部 -->
+    <div class="main-header" id="header-trigger">
+        <span class="header-deco left">◆ ─</span>
+        <span class="header-title">🌸 依櫻</span>
+        <span class="header-deco right">─ ◆</span>
+        <span class="header-arrow">▼</span>
+    </div>
+
+    <!-- 內容區 -->
+    <div class="main-content-wrapper">
+        <div id="app">
+            <!-- 裝飾角標 -->
+            <div class="corner-deco corner-tl"></div>
+            <div class="corner-deco corner-tr"></div>
+            <div class="corner-deco corner-bl"></div>
+            <div class="corner-deco corner-br"></div>
+
+            <!-- 屬性列表 -->
+            <div class="stats-grid">
+                <!-- 好感度 -->
+                <div class="stat-row">
+                    <div class="stat-label"><i class="fas fa-heart" style="color: var(--accent-pink)"></i> 好感度</div>
+                    <div class="bar-container">
+                        <div class="bar-buffer" ref="bufferAffection"></div>
+                        <div class="bar-fill" ref="barAffection">
+                            <div class="progress-shine"></div>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ tweenedStats.affection.toFixed(0) }}/{{ maxAffection }}</div>
+                </div>
+
+                <!-- 焦慮值 -->
+                <div class="stat-row">
+                    <div class="stat-label"><i class="fas fa-chart-line" style="color: var(--accent-cyan)"></i> 焦慮值</div>
+                    <div class="bar-container">
+                        <div class="bar-buffer" ref="bufferAgitation"></div>
+                        <div class="bar-fill" ref="barAgitation">
+                            <div class="progress-shine"></div>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ tweenedStats.agitation.toFixed(0) }}/100</div>
+                </div>
+
+                <!-- 空洞值 -->
+                <div class="stat-row">
+                    <div class="stat-label"><i class="fas fa-eye-slash" style="color: var(--text-dim)"></i> 空洞值</div>
+                    <div class="bar-container">
+                        <div class="bar-buffer" ref="bufferHollow"></div>
+                        <div class="bar-fill" ref="barHollow">
+                            <div class="progress-shine"></div>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ tweenedStats.hollow.toFixed(0) }}/100</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- 底部狀態 -->
+            <div class="footer-info">
+                <div class="mood-display">
+                    情緒: <span class="mood-val">{{ flags.currentMood || '—' }}</span>
+                </div>
+                <div :class="['risk-badge', riskClass]">
+                    {{ riskLabel }}
+                </div>
+            </div>
+
+            <!-- 心理活動 -->
+            <transition name="fade">
+                <div class="thoughts-box" v-if="innerState.currentThoughts">
+                    {{ innerState.currentThoughts }}
+                </div>
+            </transition>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed, onMounted, watch, nextTick, reactive } = Vue;
+
+    const app = createApp({
+        setup() {
+            // --- 數據狀態 ---
+            const stats = ref({
+                affection: 10,
+                agitation: 0,
+                hollow: 0
+            });
+
+            // 用於顯示動畫的數值
+            const tweenedStats = reactive({
+                affection: 0,
+                agitation: 0,
+                hollow: 0
+            });
+
+            const flags = ref({
+                depressionResolved: false,
+                isDead: false,
+                currentMood: '平靜',
+                suicideRisk: 'safe'
+            });
+
+            const innerState = ref({
+                currentThoughts: ''
+            });
+
+            // --- Refs for GSAP ---
+            const barAffection = ref(null);
+            const bufferAffection = ref(null);
+
+            const barAgitation = ref(null);
+            const bufferAgitation = ref(null);
+
+            const barHollow = ref(null);
+            const bufferHollow = ref(null);
+
+            // --- 計算屬性 ---
+            const maxAffection = computed(() => flags.value.depressionResolved ? 150 : 100);
+
+            const riskClass = computed(() => {
+                const risk = normalizeString(flags.value.suicideRisk);
+                if (flags.value.isDead) return 'risk-dead';
+                return `risk-${risk}`;
+            });
+
+            const riskLabel = computed(() => {
+                if (flags.value.isDead) return '☠ 死亡';
+                const risk = normalizeString(flags.value.suicideRisk);
+                const map = {
+                    'safe': '✓ 安全',
+                    'caution': '! 警戒',
+                    'danger': '! 危險',
+                    'critical': '☠ 危急'
+                };
+                return map[risk] || risk.toUpperCase();
+            });
+
+            // --- 工具函數 ---
+            function normalizeString(str) {
+                if (!str) return '';
+                return str.toString()
+                    .replace(/[\uff01-\uff5e]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+                    .toLowerCase()
+                    .trim();
+            }
+
+            // --- 動畫核心邏輯 ---
+            function updateBars(reset = false) {
+                const animateStat = (mainEl, bufferEl, key, max) => {
+                    if (!mainEl || !bufferEl) return;
+
+                    const targetVal = stats.value[key];
+                    const pct = Math.min(100, Math.max(0, (targetVal / max) * 100));
+
+                    // 數值滾動動畫
+                    gsap.to(tweenedStats, {
+                        duration: 1.5,
+                        [key]: targetVal,
+                        ease: "power2.out",
+                        roundProps: key // 確保是整數
+                    });
+
+                    if (reset) {
+                        // 展開時重置：從 0 開始
+                        gsap.set(mainEl, { width: '0%' });
+                        gsap.set(bufferEl, { width: '0%' });
+
+                        // 同步增長
+                        gsap.to([mainEl, bufferEl], {
+                            width: `${pct}%`,
+                            duration: 1.2,
+                            ease: "power2.out",
+                            stagger: 0.1 // 緩衝條稍微慢一點點
+                        });
+                    } else {
+                        // 數值變化時
+                        // 主條：快速響應
+                        gsap.to(mainEl, {
+                            width: `${pct}%`,
+                            duration: 0.5,
+                            ease: "power2.out"
+                        });
+
+                        // 緩衝條：延遲跟隨 (製造扣血/變化殘影效果)
+                        gsap.to(bufferEl, {
+                            width: `${pct}%`,
+                            duration: 1.0,
+                            ease: "power2.out",
+                            delay: 0.3 // 延遲觸發
+                        });
+                    }
+                };
+
+                animateStat(barAffection.value, bufferAffection.value, 'affection', maxAffection.value);
+                animateStat(barAgitation.value, bufferAgitation.value, 'agitation', 100);
+                animateStat(barHollow.value, bufferHollow.value, 'hollow', 100);
+            }
+
+            // 暴露給外部調用
+            window.triggerBarAnimation = () => updateBars(true);
+
+            // --- 數據載入 ---
+            const loadData = () => {
+                try {
+                    let rawVars = {};
+                    if (window.getVariables) {
+                        rawVars = window.getVariables() || {};
+                    }
+
+                    const kurariData = rawVars.kurari || (rawVars.stat_data && rawVars.stat_data.kurari) || {};
+                    const fallbackChar = (rawVars.stat_data && rawVars.stat_data.char) || {};
+
+                    // 更新真實數據
+                    stats.value.affection = Number(kurariData.stats?.affection ?? fallbackChar.affection ?? 10);
+                    stats.value.agitation = Number(kurariData.stats?.agitation ?? fallbackChar.agitation ?? 0);
+                    stats.value.hollow = Number(kurariData.stats?.hollow ?? fallbackChar.hollow ?? 0);
+
+                    flags.value.depressionResolved = kurariData.flags?.depressionResolved ?? fallbackChar.depressionResolved ?? false;
+                    flags.value.isDead = kurariData.flags?.isDead ?? fallbackChar.isDead ?? false;
+                    flags.value.currentMood = kurariData.flags?.currentMood ?? fallbackChar.mood ?? '平靜';
+                    flags.value.suicideRisk = kurariData.flags?.suicideRisk ?? fallbackChar.suicideRisk ?? 'safe';
+
+                    innerState.value.currentThoughts = kurariData.innerState?.currentThoughts ?? fallbackChar.thoughts ?? '';
+
+                    // 首次載入不重置，直接更新
+                    nextTick(() => updateBars(false));
+
+                } catch (e) {
+                    console.warn("Data load failed", e);
+                }
+            };
+
+            onMounted(() => {
+                loadData();
+                document.addEventListener('VARIABLE_UPDATE_ENDED', loadData);
+                if (window.eventOn) {
+                    window.eventOn('mag_variable_update_ended', loadData);
+                }
+            });
+
+            // 監聽數據變化
+            watch(stats, () => nextTick(() => updateBars(false)), { deep: true });
+
+            return {
+                stats,
+                tweenedStats,
+                flags,
+                innerState,
+                maxAffection,
+                riskClass,
+                riskLabel,
+                barAffection, bufferAffection,
+                barAgitation, bufferAgitation,
+                barHollow, bufferHollow
+            };
+        }
+    }).mount('#app');
+
+    // --- 摺疊邏輯 ---
+    const container = document.getElementById('app-container');
+    const header = document.getElementById('header-trigger');
+
+    header.addEventListener('click', () => {
+        const isExpanded = container.classList.toggle('expanded');
+        if (isExpanded && window.triggerBarAnimation) {
+            // 展開時觸發從 0 開始的動畫
+            window.triggerBarAnimation();
+        }
+    });
+
+</script>
+</body>
+</html>

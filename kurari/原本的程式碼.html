@@ -1,0 +1,470 @@
+```
+<head>
+    <style>
+        :root {
+            --bg-outer: #151018;
+            --bg-panel: linear-gradient(180deg, #201a25 0%, #1a1520 100%);
+            --bg-bar: #0f0c12;
+
+            --border-pink: #f8a5c2;
+            --border-cyan: #7fdbda;
+            --border-dim: #3a3040;
+
+            --accent-pink: #f8a5c2;
+            --accent-cyan: #7fdbda;
+            --accent-sakura: #ffb8d0;
+
+            --text-main: #fff0f5;
+            --text-dim: #b8a8c0;
+
+            --bar-fill-start: #556666;
+            --bar-fill-mid: #788a8a;
+            --bar-fill-end: #9cb0b0;
+
+            --buffer-positive: #7fdbda;
+            --buffer-negative: #ff8090;
+
+            --positive-text: #7fdbda;
+            --negative-text: #ff8090;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background: transparent;
+        }
+
+        .kurari-status-panel {
+            width: 100%;
+            color: var(--text-main);
+            position: relative;
+            padding: 6px;
+            overflow: hidden;
+        }
+
+        /* Outer Gradient Border */
+        .kurari-status-panel::before {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: linear-gradient(135deg, var(--border-pink), var(--border-cyan), var(--border-pink));
+            z-index: 0;
+            box-shadow: 0 0 15px rgba(248, 165, 194, 0.15);
+        }
+
+        /* Main Content */
+        .kurari-frame-inner {
+            background: var(--bg-panel);
+            padding: 20px 24px;
+            position: relative;
+            z-index: 1;
+            height: 100%;
+        }
+
+        /* Inner Corners */
+        .kurari-corner {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .kurari-corner::before {
+            content: '';
+            position: absolute;
+            border-style: solid;
+            border-width: 2px;
+        }
+
+        .kurari-corner-tl {
+            top: 8px;
+            left: 8px;
+        }
+
+        .kurari-corner-tl::before {
+            border-width: 2px 0 0 2px;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            border-color: var(--border-pink);
+        }
+
+        .kurari-corner-tr {
+            top: 8px;
+            right: 8px;
+        }
+
+        .kurari-corner-tr::before {
+            border-width: 2px 2px 0 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            right: 0;
+            border-color: var(--border-cyan);
+        }
+
+        .kurari-corner-bl {
+            bottom: 8px;
+            left: 8px;
+        }
+
+        .kurari-corner-bl::before {
+            border-width: 0 0 2px 2px;
+            width: 100%;
+            height: 100%;
+            bottom: 0;
+            left: 0;
+            border-color: var(--border-cyan);
+        }
+
+        .kurari-corner-br {
+            bottom: 8px;
+            right: 8px;
+        }
+
+        .kurari-corner-br::before {
+            border-width: 0 2px 2px 0;
+            width: 100%;
+            height: 100%;
+            bottom: 0;
+            right: 0;
+            border-color: var(--border-pink);
+        }
+
+        /* Header */
+        .kurari-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .kurari-header-deco {
+            font-size: 8px;
+            opacity: 0.8;
+        }
+
+        .kurari-header-deco.left {
+            color: var(--border-pink);
+        }
+
+        .kurari-header-deco.right {
+            color: var(--border-cyan);
+        }
+
+        .kurari-title {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+            filter: drop-shadow(0 0 8px rgba(248, 165, 194, 0.3));
+        }
+
+        .kurari-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .kurari-stat-row {
+            display: grid;
+            grid-template-columns: 85px 1fr 65px;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @media (min-width: 500px) {
+            .kurari-stat-row {
+                grid-template-columns: 100px 1fr 80px;
+                gap: 18px;
+            }
+        }
+
+        .kurari-stat-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Progress Bar */
+        .kurari-bar-wrap {
+            position: relative;
+            height: 16px;
+        }
+
+        .kurari-bar-bg {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-bar);
+            border: 1px solid var(--border-dim);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .kurari-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--bar-fill-start), var(--bar-fill-mid), var(--bar-fill-end));
+            box-shadow: 0 0 5px rgba(120, 138, 138, 0.4);
+            transition: width 0.5s ease;
+        }
+
+        .kurari-bar-fill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
+            pointer-events: none;
+        }
+
+        .kurari-stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+            text-align: right;
+        }
+
+        .kurari-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--border-pink) 20%, var(--border-cyan) 50%, var(--border-pink) 80%, transparent 100%);
+            margin: 18px 0 14px;
+        }
+
+        .kurari-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 16px;
+        }
+
+        .kurari-mood {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .kurari-mood-label {
+            color: var(--text-dim);
+        }
+
+        .kurari-mood-value {
+            color: var(--accent-sakura);
+        }
+
+        .kurari-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .kurari-badge.healed {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(127, 219, 218, 0.1);
+        }
+
+        .kurari-badge.safe {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(127, 219, 218, 0.1);
+        }
+
+        .kurari-badge.caution {
+            border-color: #ffdc64;
+            color: #ffdc64;
+            background: rgba(255, 220, 100, 0.1);
+        }
+
+        .kurari-badge.danger {
+            border-color: #ff9090;
+            color: #ff9090;
+            background: rgba(255, 144, 144, 0.1);
+        }
+
+        .kurari-badge.critical {
+            border-color: #ff6a6a;
+            color: #ff6a6a;
+            background: rgba(255, 100, 100, 0.15);
+            animation: criticalPulse 1.2s infinite;
+        }
+
+        @keyframes criticalPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .kurari-thoughts {
+            margin-top: 14px;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 3px;
+            border-left: 3px solid;
+            border-image: linear-gradient(180deg, var(--border-pink), var(--border-cyan)) 1;
+            font-size: 11px;
+            line-height: 1.6;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .kurari-thoughts::before {
+            content: '💭 ';
+            font-style: normal;
+        }
+    </style>
+    <script type="module">
+        async function init() {
+            /* Wait for MVU system */
+            await waitGlobalInitialized('Mvu');
+
+            populateCharacterData();
+
+            /* Listen for variable updates */
+            document.addEventListener('VARIABLE_UPDATE_ENDED', () => {
+                populateCharacterData();
+            });
+        }
+
+        function populateCharacterData() {
+            const all_variables = getAllVariables();
+
+            /* Get character data using English variable names */
+            const affection = _.get(all_variables, 'stat_data.char.affection', 70);
+            const agitation = _.get(all_variables, 'stat_data.char.agitation', 50);
+            const hollow = _.get(all_variables, 'stat_data.char.hollow', 50);
+            const depressionResolved = _.get(all_variables, 'stat_data.char.depressionResolved', false);
+            const suicideRisk = _.get(all_variables, 'stat_data.char.suicideRisk', 'caution');
+            const mood = _.get(all_variables, 'stat_data.char.mood', '');
+            const thoughts = _.get(all_variables, 'stat_data.char.thoughts', '');
+
+            /* Update stats */
+            const affMax = depressionResolved ? 150 : 100;
+            const pct = (v, max) => Math.max(0, Math.min(100, (v / max * 100)));
+
+            $('#kurari-aff-bar').css('width', pct(affection, affMax) + '%');
+            $('#kurari-aff-val').text(affection + '/' + affMax);
+
+            $('#kurari-agi-bar').css('width', pct(agitation, 100) + '%');
+            $('#kurari-agi-val').text(agitation + '/100');
+
+            $('#kurari-hol-bar').css('width', pct(hollow, 100) + '%');
+            $('#kurari-hol-val').text(hollow + '/100');
+
+            /* Update mood */
+            $('#kurari-mood').text(mood || '—');
+
+            /* Update badge */
+            const riskLabels = {
+                safe: '✓ 安全',
+                caution: '! 警戒',
+                danger: '! 危險',
+                critical: '☠ 危急',
+                dead: '☠ 死亡'
+            };
+
+            const $badge = $('#kurari-badge');
+            $badge.removeClass('healed safe caution danger critical');
+
+            if (depressionResolved) {
+                $badge.addClass('healed').text('✨ 已治癒 — 幸福中');
+            } else {
+                $badge.addClass(suicideRisk).text(riskLabels[suicideRisk] || '! 警戒');
+            }
+
+            /* Update thoughts */
+            $('#kurari-thoughts').text(thoughts ? '"' + thoughts + '"' : '');
+        }
+
+        $(errorCatched(init));
+    </script>
+</head>
+
+<body>
+    <div class="kurari-status-panel">
+        <div class="kurari-frame-inner">
+            <div class="kurari-corner kurari-corner-tl"></div>
+            <div class="kurari-corner kurari-corner-tr"></div>
+            <div class="kurari-corner kurari-corner-bl"></div>
+            <div class="kurari-corner kurari-corner-br"></div>
+
+            <div class="kurari-header">
+                <span class="kurari-header-deco left">◆ ─</span>
+                <span class="kurari-title">🌸 依櫻</span>
+                <span class="kurari-header-deco right">─ ◆</span>
+            </div>
+
+            <div class="kurari-stats">
+                <div class="kurari-stat-row">
+                    <div class="kurari-stat-name"><span>💗</span><span>好感度</span></div>
+                    <div class="kurari-bar-wrap">
+                        <div class="kurari-bar-bg">
+                            <div class="kurari-bar-fill" id="kurari-aff-bar" style="width: 70%;"></div>
+                        </div>
+                    </div>
+                    <div class="kurari-stat-value" id="kurari-aff-val">70/100</div>
+                </div>
+                <div class="kurari-stat-row">
+                    <div class="kurari-stat-name"><span>📈</span><span>焦慮值</span></div>
+                    <div class="kurari-bar-wrap">
+                        <div class="kurari-bar-bg">
+                            <div class="kurari-bar-fill" id="kurari-agi-bar" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                    <div class="kurari-stat-value" id="kurari-agi-val">50/100</div>
+                </div>
+                <div class="kurari-stat-row">
+                    <div class="kurari-stat-name"><span>😶</span><span>空洞值</span></div>
+                    <div class="kurari-bar-wrap">
+                        <div class="kurari-bar-bg">
+                            <div class="kurari-bar-fill" id="kurari-hol-bar" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                    <div class="kurari-stat-value" id="kurari-hol-val">50/100</div>
+                </div>
+            </div>
+
+            <div class="kurari-divider"></div>
+
+            <div class="kurari-footer">
+                <div class="kurari-mood">
+                    <span class="kurari-mood-label">情緒：</span>
+                    <span class="kurari-mood-value" id="kurari-mood">—</span>
+                </div>
+                <span class="kurari-badge caution" id="kurari-badge">! 警戒</span>
+            </div>
+
+            <div class="kurari-thoughts" id="kurari-thoughts"></div>
+        </div>
+    </div>
+</body>
+```
