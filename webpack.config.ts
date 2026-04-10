@@ -97,7 +97,11 @@ function watch_tavern_helper(compiler: webpack.Compiler) {
 
     compiler.hooks.done.tap('watch_tavern_helper', () => {
       console.info('\n\x1b[36m[tavern_helper]\x1b[0m 检测到完成编译, 推送更新事件...');
+<<<<<<< HEAD
       if (compiler.options.plugins.find(plugin => plugin instanceof HtmlWebpackPlugin)) {
+=======
+      if (compiler.options.plugins.some(plugin => plugin instanceof HtmlWebpackPlugin)) {
+>>>>>>> 304e8c08c9a8646568197fb30d79c23676d3a5a0
         io.emit('message_iframe_updated');
       } else {
         io.emit('script_iframe_updated');
